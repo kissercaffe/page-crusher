@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { scrapeAndExtractWords, ScrapingResult } from "./actions";
+import WordPhysics from "./components/WordPhysics";
 
 export default function Home() {
   const [url, setUrl] = useState("");
@@ -48,20 +49,11 @@ export default function Home() {
         )}
 
         {result?.success && result.words && (
-          <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div>
             <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
               {result.words.length}語を抽出しました
             </p>
-            <div className="flex flex-wrap gap-2">
-              {result.words.map((word, index) => (
-                <span
-                  key={index}
-                  className="rounded-full bg-zinc-100 px-3 py-1 text-sm text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200"
-                >
-                  {word}
-                </span>
-              ))}
-            </div>
+            <WordPhysics words={result.words} />
           </div>
         )}
       </main>

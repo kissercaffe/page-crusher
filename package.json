@@ -11,6 +11,7 @@
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
     "@types/jsdom": "^27.0.0",
+    "@types/matter-js": "^0.20.2",
     "jsdom": "^27.4.0",
     "matter-js": "^0.20.0",
     "next": "16.1.2",
