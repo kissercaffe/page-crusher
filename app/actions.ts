@@ -3,10 +3,30 @@
 import { Readability } from "@mozilla/readability";
 import { JSDOM } from "jsdom";
 
+export interface PageMeta {
+  title: string;
+  description?: string;
+  image?: string;
+  siteName?: string;
+  url: string;
+}
+
 export interface ScrapingResult {
   success: boolean;
+  meta?: PageMeta;
   words?: string[];
   error?: string;
+}
+
+function getMetaContent(document: Document, selectors: string[]): string | undefined {
+  for (const selector of selectors) {
+    const element = document.querySelector(selector);
+    if (element) {
+      const content = element.getAttribute("content");
+      if (content) return content;
+    }
+  }
+  return undefined;
 }
 
 export async function scrapeAndExtractWords(
@@ -40,6 +60,43 @@ export async function scrapeAndExtractWords(
     const dom = new JSDOM(html, { url });
     const document = dom.window.document;
 
+    // メタ情報を取得
+    const title =
+      getMetaContent(document, [
+        'meta[property="og:title"]',
+        'meta[name="twitter:title"]',
+      ]) ||
+      document.querySelector("title")?.textContent ||
+      parsedUrl.hostname;
+
+    const description = getMetaContent(document, [
+      'meta[property="og:description"]',
+      'meta[name="twitter:description"]',
+      'meta[name="description"]',
+    ]);
+
+    let image = getMetaContent(document, [
+      'meta[property="og:image"]',
+      'meta[name="twitter:image"]',
+    ]);
+
+    // 相対URLを絶対URLに変換
+    if (image && !image.startsWith("http")) {
+      image = new URL(image, url).href;
+    }
+
+    const siteName =
+      getMetaContent(document, ['meta[property="og:site_name"]']) ||
+      parsedUrl.hostname;
+
+    const meta: PageMeta = {
+      title,
+      description,
+      image,
+      siteName,
+      url,
+    };
+
     // Readabilityで本文を抽出
     const reader = new Readability(document);
     const article = reader.parse();
@@ -68,7 +125,7 @@ export async function scrapeAndExtractWords(
     const shuffled = uniqueWords.sort(() => Math.random() - 0.5);
     const selectedWords = shuffled.slice(0, 100);
 
-    return { success: true, words: selectedWords };
+    return { success: true, meta, words: selectedWords };
   } catch (error) {
     if (error instanceof Error) {
       if (error.message.includes("Invalid URL")) {

@@ -48,6 +48,39 @@ export default function Home() {
           </div>
         )}
 
+        {result?.success && result.meta && (
+          <a
+            href={result.meta.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mb-6 block overflow-hidden rounded-lg border border-zinc-200 bg-white transition-shadow hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900"
+          >
+            {result.meta.image && (
+              <div className="relative h-48 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={result.meta.image}
+                  alt={result.meta.title}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            )}
+            <div className="p-4">
+              <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">
+                {result.meta.siteName}
+              </p>
+              <h2 className="mb-2 line-clamp-2 text-lg font-semibold text-black dark:text-white">
+                {result.meta.title}
+              </h2>
+              {result.meta.description && (
+                <p className="line-clamp-2 text-sm text-zinc-600 dark:text-zinc-400">
+                  {result.meta.description}
+                </p>
+              )}
+            </div>
+          </a>
+        )}
+
         {result?.success && result.words && (
           <div>
             <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
