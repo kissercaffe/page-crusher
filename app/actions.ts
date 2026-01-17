@@ -14,7 +14,7 @@ export interface PageMeta {
 export interface ScrapingResult {
   success: boolean;
   meta?: PageMeta;
-  words?: string[];
+  sentences?: string[];
   error?: string;
 }
 
@@ -105,27 +105,26 @@ export async function scrapeAndExtractWords(
       return { success: false, error: "本文を抽出できませんでした" };
     }
 
-    // Intl.Segmenterで単語を抽出（日本語対応）
-    const segmenter = new Intl.Segmenter("ja", { granularity: "word" });
+    // Intl.Segmenterで文章を抽出（日本語対応）
+    const segmenter = new Intl.Segmenter("ja", { granularity: "sentence" });
     const segments = segmenter.segment(article.textContent);
 
-    // 単語のみを抽出（記号や空白を除外）
-    const words: string[] = [];
+    // 文章を抽出（空白のみの文を除外）
+    const sentences: string[] = [];
     for (const segment of segments) {
-      if (segment.isWordLike) {
-        const word = segment.segment.trim();
-        if (word.length > 0) {
-          words.push(word);
-        }
+      const sentence = segment.segment.trim();
+      // 空白や改行のみの文を除外、短すぎる文も除外
+      if (sentence.length > 5) {
+        sentences.push(sentence);
       }
     }
 
-    // 重複を除去してシャッフル、最大100語を返す
-    const uniqueWords = [...new Set(words)];
-    const shuffled = uniqueWords.sort(() => Math.random() - 0.5);
-    const selectedWords = shuffled.slice(0, 100);
+    // 重複を除去してシャッフル、最大30文を返す
+    const uniqueSentences = [...new Set(sentences)];
+    const shuffled = uniqueSentences.sort(() => Math.random() - 0.5);
+    const selectedSentences = shuffled.slice(0, 30);
 
-    return { success: true, meta, words: selectedWords };
+    return { success: true, meta, sentences: selectedSentences };
   } catch (error) {
     if (error instanceof Error) {
       if (error.message.includes("Invalid URL")) {
