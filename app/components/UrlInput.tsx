@@ -22,9 +22,9 @@ export default function UrlInput() {
         borderRadius: "24px",
         padding: "4px",
         backgroundColor: "#fff",
-        transition: isOpen ? "all 0.3s ease-out" : "all 0.6s ease-out",
+        transition: isOpen ? "all 0.3s ease-out" : "all 0.3s ease-out",
         maxWidth: isOpen ? "500px" : "48px",
-        width: isOpen ? "auto" : "48px",
+        width: isOpen ? "500px" : "48px",
         overflow: "hidden",
       }}
     >
@@ -36,10 +36,13 @@ export default function UrlInput() {
           alignItems: "center",
           flex: 1,
           opacity: isOpen ? 1 : 0,
-          width: isOpen ? "auto" : "0",
+          minWidth: isOpen ? "200px" : "0",
+          maxWidth: isOpen ? "500px" : "0",
+          width: isOpen ? "100%" : "0",
           transform: isOpen ? "translateX(0)" : "translateX(-100%)",
-          transition: isOpen ? "all 0.3s ease-out" : "all 0.6s ease-out",
+          transition: isOpen ? "all 0.3s ease-out" : "all 0.3s ease-out",
           overflow: "hidden",
+          pointerEvents: isOpen ? "auto" : "none",
         }}
       >
         <input
