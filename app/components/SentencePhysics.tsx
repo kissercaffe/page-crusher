@@ -96,6 +96,7 @@ export default function SentencePhysics({ sentences }: SentencePhysicsProps) {
   const containerSizeRef = useRef({ width: 0, height: 0 });
   const measureTextWidthRef = useRef<((text: string) => number) | null>(null);
   const [positions, setPositions] = useState<SentencePosition[]>([]);
+  const [containerWidth, setContainerWidth] = useState(0);
 
   const createBody = useCallback(
     (
@@ -171,13 +172,33 @@ export default function SentencePhysics({ sentences }: SentencePhysicsProps) {
     []
   );
 
+  // コンテナのサイズを監視
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const container = containerRef.current;
+    const updateSize = () => {
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      containerSizeRef.current = { width, height };
+      setContainerWidth(width);
+    };
+
+    updateSize();
+    const resizeObserver = new ResizeObserver(updateSize);
+    resizeObserver.observe(container);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   useEffect(() => {
     if (!containerRef.current || sentences.length === 0) return;
 
     const container = containerRef.current;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-    containerSizeRef.current = { width, height };
+    const width = containerSizeRef.current.width;
+    const height = containerSizeRef.current.height;
 
     // 文字幅測定関数を初期化
     measureTextWidthRef.current = (text: string) => {
@@ -440,15 +461,33 @@ export default function SentencePhysics({ sentences }: SentencePhysicsProps) {
 
       {/* ピン状の床 */}
       <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex justify-around px-4 pb-2">
-        {Array.from({ length: 20 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-3 w-3 rounded-full bg-zinc-800 shadow-md dark:bg-zinc-950"
-            // style={{
-            //   background: "linear-gradient(135deg, #a1a1aa 0%, #71717a 50%, #52525b 100%)",
-            // }}
-          />
-        ))}
+        {(() => {
+          // コンテナの幅に基づいてピンの数を計算
+          // ピンのサイズ: 12px (h-3 w-3)
+          // 左右のパディング: 16px * 2 = 32px (px-4)
+          // 最小間隔: 8px
+          const pinSize = 12;
+          const padding = 32;
+          const minSpacing = 8;
+          const availableWidth = containerWidth - padding;
+          
+          // 利用可能な幅が十分でない場合は0個
+          if (availableWidth < pinSize) {
+            return null;
+          }
+          
+          // ピンの数 = 利用可能な幅 / (ピンサイズ + 最小間隔)
+          const maxPins = Math.floor(availableWidth / (pinSize + minSpacing));
+          // 最大20個まで、最小1個
+          const pinCount = Math.max(1, Math.min(maxPins, 20));
+          
+          return Array.from({ length: pinCount }).map((_, i) => (
+            <div
+              key={i}
+              className="h-3 w-3 rounded-full bg-zinc-800 shadow-md dark:bg-zinc-950"
+            />
+          ));
+        })()}
       </div>
     </div>
   );
