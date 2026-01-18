@@ -59,11 +59,42 @@ function isSingleChar(sentence: string): boolean {
   return Array.from(sentence.trim()).length === 1;
 }
 
+// 実際の文字列の幅を測定する関数
+function measureTextWidth(text: string, container: HTMLElement): number {
+  if (typeof window === "undefined") return text.length * 14; // サーバーサイドの場合はフォールバック値
+
+  // Canvas要素を作成して文字幅を測定
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (!context) return text.length * 14; // フォールバック値
+
+  // 実際のフォント設定を取得（コンテナ要素から取得）
+  // 一時的な要素を作成して実際のスタイルを取得
+  const tempElement = document.createElement("div");
+  tempElement.className = "text-sm"; // text-sm クラスを適用
+  tempElement.style.position = "absolute";
+  tempElement.style.visibility = "hidden";
+  tempElement.style.whiteSpace = "nowrap";
+  container.appendChild(tempElement);
+  
+  const computedStyle = window.getComputedStyle(tempElement);
+  const fontSize = computedStyle.fontSize;
+  const fontFamily = computedStyle.fontFamily;
+  
+  container.removeChild(tempElement);
+  
+  context.font = `${fontSize} ${fontFamily}`;
+  
+  // 実際の文字列の幅を測定
+  return context.measureText(text).width;
+}
+
 export default function SentencePhysics({ sentences }: SentencePhysicsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<Matter.Engine | null>(null);
   const bodiesRef = useRef<Map<number, SentenceBody>>(new Map());
   const containerSizeRef = useRef({ width: 0, height: 0 });
+  const measureTextWidthRef = useRef<((text: string) => number) | null>(null);
   const [positions, setPositions] = useState<SentencePosition[]>([]);
 
   const createBody = useCallback(
@@ -78,12 +109,27 @@ export default function SentencePhysics({ sentences }: SentencePhysicsProps) {
       const { width: containerWidth } = containerSizeRef.current;
       if (containerWidth === 0) return null;
 
-      const charWidth = 14;
+      // 実際の文字列の幅を測定
+      const measureWidth = measureTextWidthRef.current;
+      let sentenceWidth: number;
+      if (measureWidth && containerRef.current) {
+        sentenceWidth = measureWidth(sentence);
+      } else {
+        // フォールバック: 文字数ベースの計算
+        sentenceWidth = sentence.length * 14;
+      }
+      
+      // パディングを考慮（px-1 = 左右4pxずつ）
+      const padding = 8;
+      sentenceWidth += padding;
+      
+      // 最大幅の制限
       const maxWidth = containerWidth - 40;
-      const sentenceWidth = Math.min(
-        Math.max(sentence.length * charWidth, 60),
-        maxWidth
-      );
+      sentenceWidth = Math.min(sentenceWidth, maxWidth);
+      
+      // 最小幅はパディング分のみ（文字が少なくても小さくできる）
+      const minWidth = padding + 20; // 最小でも20pxの文字幅を確保
+      sentenceWidth = Math.max(sentenceWidth, minWidth);
       const sentenceHeight = 40;
 
       const id = nextId++;
@@ -132,6 +178,11 @@ export default function SentencePhysics({ sentences }: SentencePhysicsProps) {
     const width = container.clientWidth;
     const height = container.clientHeight;
     containerSizeRef.current = { width, height };
+
+    // 文字幅測定関数を初期化
+    measureTextWidthRef.current = (text: string) => {
+      return measureTextWidth(text, container);
+    };
 
     // IDをリセット
     nextId = 0;
@@ -193,13 +244,11 @@ export default function SentencePhysics({ sentences }: SentencePhysicsProps) {
 
     // 初期文章ボディを作成
     sentences.forEach((sentence, index) => {
-      const charWidth = 14;
-      const maxWidth = width - 40;
-      const sentenceWidth = Math.min(
-        Math.max(sentence.length * charWidth, 60),
-        maxWidth
-      );
-      const x = Math.random() * (width - sentenceWidth) + sentenceWidth / 2;
+      // 幅の見積もり（正確な幅はcreateBody内で計算される）
+      const estimatedWidth = measureTextWidthRef.current
+        ? Math.min(measureTextWidthRef.current(sentence) + 8 + 20, width - 40)
+        : Math.min(sentence.length * 14 + 28, width - 40);
+      const x = Math.random() * Math.max(20, width - estimatedWidth) + estimatedWidth / 2;
       const y = -100 - index * 400; // 1つずつ順番に落ちてくるよう間隔を広げる
 
       const sentenceBody = createBody(sentence, x, y);
@@ -377,7 +426,7 @@ export default function SentencePhysics({ sentences }: SentencePhysicsProps) {
       {positions.map((pos) => (
         <div
           key={pos.id}
-          className="absolute cursor-grab select-none overflow-hidden text-ellipsis whitespace-nowrap rounded-lg bg-zinc-100 px-3 py-2 text-sm text-zinc-800 active:cursor-grabbing dark:bg-zinc-800 dark:text-zinc-200"
+          className="absolute cursor-grab select-none overflow-hidden text-ellipsis whitespace-nowrap rounded-lg bg-zinc-100 px-1 py-1 text-sm text-zinc-800 active:cursor-grabbing dark:bg-zinc-800 dark:text-zinc-200"
           style={{
             left: pos.x,
             top: pos.y,
@@ -394,10 +443,10 @@ export default function SentencePhysics({ sentences }: SentencePhysicsProps) {
         {Array.from({ length: 20 }).map((_, i) => (
           <div
             key={i}
-            className="h-5 w-3 rounded-full bg-zinc-400 shadow-md dark:bg-zinc-500"
-            style={{
-              background: "linear-gradient(135deg, #a1a1aa 0%, #71717a 50%, #52525b 100%)",
-            }}
+            className="h-3 w-3 rounded-full bg-zinc-800 shadow-md dark:bg-zinc-950"
+            // style={{
+            //   background: "linear-gradient(135deg, #a1a1aa 0%, #71717a 50%, #52525b 100%)",
+            // }}
           />
         ))}
       </div>

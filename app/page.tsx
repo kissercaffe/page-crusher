@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { scrapeAndExtractWords, ScrapingResult } from "./actions";
+
 import SentencePhysics from "./components/SentencePhysics";
 
 export default function Home() {
@@ -12,8 +13,9 @@ export default function Home() {
   const [isDragging, setIsDragging] = useState(false);
   const [isOverTrash, setIsOverTrash] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!url.trim()) return;
     setShowWords(false);
     startTransition(async () => {
       const res = await scrapeAndExtractWords(url);
@@ -59,23 +61,27 @@ export default function Home() {
           Page Crusher
         </h1>
 
-        <form onSubmit={handleSubmit} className="mb-8 flex gap-4">
+        <form onSubmit={handleSubmit} className="mb-8 flex">
           <input
             type="url"
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={(e) => {
+              setUrl(e.target.value);
+              handleSubmit();
+            }}
             placeholder="URLを入力してください"
             required
-            className="flex-1 rounded-lg border border-zinc-300 bg-white px-4 py-3 text-black placeholder:text-zinc-400 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-white dark:placeholder:text-zinc-600"
+            className="flex-1 rounded-lg border border-0 border-zinc-300 bg-white px-3 py-3 text-black placeholder:text-zinc-400 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-white dark:placeholder:text-zinc-600"
           />
-          <button
+          {/* <button
             type="submit"
             disabled={isPending}
-            className="rounded-lg bg-black px-6 py-3 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+            className="rounded-r-lg bg-black px-6 py-3 font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
           >
             {isPending ? "読み込み中..." : "抽出"}
-          </button>
+          </button> */}
         </form>
+
 
         {result?.error && (
           <div className="mb-8 rounded-lg bg-red-100 p-4 text-red-700 dark:bg-red-900/30 dark:text-red-400">
