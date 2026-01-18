@@ -55,24 +55,37 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-zinc-50 p-8 font-sans dark:bg-black">
+    <div className="flex min-h-screen flex-col items-center p-8 font-sans">
       <main className="w-full max-w-4xl">
         <h1 className="mb-8 text-center text-3xl font-bold text-black dark:text-white">
           Page Crusher
         </h1>
 
-        <form onSubmit={handleSubmit} className="mb-8 flex">
-          <input
-            type="url"
-            value={url}
-            onChange={(e) => {
-              setUrl(e.target.value);
-              handleSubmit();
-            }}
-            placeholder="URLを入力してください"
-            required
-            className="flex-1 rounded-lg border border-0 border-zinc-300 bg-white px-3 py-3 text-black placeholder:text-zinc-400 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-white dark:placeholder:text-zinc-600"
-          />
+        <form onSubmit={handleSubmit} className="mb-8 flex items-center gap-2">
+          <div className="relative flex-1">
+            <input
+              type="url"
+              value={url}
+              onChange={(e) => {
+                const newUrl = e.target.value;
+                setUrl(newUrl);
+                if (!newUrl.trim()) {
+                  setResult(null);
+                  setShowWords(false);
+                } else {
+                  handleSubmit();
+                }
+              }}
+              placeholder="URLを入力してください"
+              required
+              className="w-full rounded-lg border border-0 border-zinc-300 bg-white px-3 py-3 pr-24 text-black placeholder:text-zinc-400 focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:placeholder:text-zinc-600"
+            />
+            {url.trim() && (
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400 dark:text-zinc-500">
+                 Press enter key
+              </span>
+            )}
+          </div>
           {/* <button
             type="submit"
             disabled={isPending}
@@ -100,12 +113,12 @@ export default function Home() {
               }`}
             >
               {result.meta.image && (
-                <div className="relative h-48 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                <div className="relative h-48 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={result.meta.image}
                     alt={result.meta.title}
-                    className="h-full w-full object-cover pointer-events-none"
+                    className="max-h-full max-w-full object-contain pointer-events-none"
                   />
                 </div>
               )}
